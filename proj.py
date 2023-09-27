@@ -10,7 +10,7 @@ places = data["places"]
 vehicles = data["vehicles"]
 patients = data["patients"]
 distMatrix = data["distMatrix"]
-sameVehicleBackWard = data["sameVehicleBackWard"]
+sameVehicleBackWard =  data["sameVehicleBackward"]
 
 # Now you can access the extracted data as needed.
 # For example, to print the maxWaitTime:
