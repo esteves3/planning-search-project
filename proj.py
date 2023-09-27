@@ -42,6 +42,4 @@ with open('model_data.dzn', 'w') as dzn_file:
     dzn_file.write(f"sameVehicleBackward = {data['sameVehicleBackward']};\n")
 
 
-
-# Run MiniZinc with the model file
-subprocess.run(["minizinc", "proj.mzn"])
+subprocess.run(["minizinc", "model.mzn"])
