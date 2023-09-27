@@ -2,44 +2,44 @@ import json
 import subprocess
 
 # Load the JSON data from a file
-with open('easy/easy_1.json', 'r') as json_file:
-    data = json.load(json_file)
+with open('easy/easy_1.json', 'r') as input_json:
+    data = json.load(input_json)
 
 # Create a MiniZinc data file
-with open('model_data.dzn', 'w') as dzn_file:
+with open('model_data.dzn', 'w') as data:
     # Write Max Wait Time
-    dzn_file.write(f"maxWaitTime = \"{data['maxWaitTime']}\";\n")
+    data.write(f"maxWaitTime = \"{data['maxWaitTime']}\";\n")
 
     # Write Places
-    dzn_file.write("places = [|")
+    data.write("places = [|")
     for place in data['places']:
-        dzn_file.write(f"{place['category']}, ")
-    dzn_file.write("|];\n")
+        data.write(f"{place['category']}, ")
+    data.write("|];\n")
 
     # Write Vehicles
-    dzn_file.write("vehicles = [|")
+    data.write("vehicles = [|")
     for vehicle in data['vehicles']:
-        dzn_file.write(f"{vehicle['canTake']}, {vehicle['start']}, {vehicle['end']}, {vehicle['capacity']}, \"")
+        data.write(f"{vehicle['canTake']}, {vehicle['start']}, {vehicle['end']}, {vehicle['capacity']}, \"")
         for window in vehicle['availability']:
-            dzn_file.write(f"{window}, ")
-        dzn_file.write("\" |];\n")
+            data.write(f"{window}, ")
+        data.write("\" |];\n")
 
     # Write Patients
-    dzn_file.write("patients = [|")
+    data.write("patients = [|")
     for patient in data['patients']:
-        dzn_file.write(f"{patient['category']}, {patient['load']}, {patient['start']}, {patient['destination']}, {patient['end']}, \"{patient['rdvTime']}\", \"{patient['rdvDuration']}\", \"{patient['srvDuration']}\", ")
-    dzn_file.write("|];\n")
+        data.write(f"{patient['category']}, {patient['load']}, {patient['start']}, {patient['destination']}, {patient['end']}, \"{patient['rdvTime']}\", \"{patient['rdvDuration']}\", \"{patient['srvDuration']}\", ")
+    data.write("|];\n")
 
     # Write Distance Matrix
-    dzn_file.write("distMatrix = [|")
+    data.write("distMatrix = [|")
     for row in data['distMatrix']:
-        dzn_file.write("|")
+        data.write("|")
         for distance in row:
-            dzn_file.write(f"{distance}, ")
-    dzn_file.write("|];\n")
+            data.write(f"{distance}, ")
+    data.write("|];\n")
 
     # Write Same Vehicle Backward
-    dzn_file.write(f"sameVehicleBackward = {data['sameVehicleBackward']};\n")
+    data.write(f"sameVehicleBackward = {data['sameVehicleBackward']};\n")
 
 
 subprocess.run(["minizinc", "model.mzn"])
