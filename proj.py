@@ -1,54 +1,47 @@
 import json
+import subprocess
 
-# Read the input data from a JSON file
-with open('easy/easy_1.json', 'r') as file:
-    data = json.load(file)
+# Load the JSON data from a file
+with open('easy/easy_1.json', 'r') as json_file:
+    data = json.load(json_file)
 
-# Extract data from the JSON
-maxWaitTime = data["maxWaitTime"]
-places = data["places"]
-vehicles = data["vehicles"]
-patients = data["patients"]
-distMatrix = data["distMatrix"]
-sameVehicleBackWard =  data["sameVehicleBackward"]
+# Create a MiniZinc data file
+with open('model_data.dzn', 'w') as dzn_file:
+    # Write Max Wait Time
+    dzn_file.write(f"maxWaitTime = \"{data['maxWaitTime']}\";\n")
 
-# Now you can access the extracted data as needed.
-# For example, to print the maxWaitTime:
-print("Max Wait Time:", maxWaitTime)
+    # Write Places
+    dzn_file.write("places = [|")
+    for place in data['places']:
+        dzn_file.write(f"{place['category']}, ")
+    dzn_file.write("|];\n")
 
-# To iterate through the places:
-for place in places:
-    id = place["id"]
-    category = place["category"]
-    print(f"Place ID: {id}, Category: {category}")
+    # Write Vehicles
+    dzn_file.write("vehicles = [|")
+    for vehicle in data['vehicles']:
+        dzn_file.write(f"{vehicle['canTake']}, {vehicle['start']}, {vehicle['end']}, {vehicle['capacity']}, \"")
+        for window in vehicle['availability']:
+            dzn_file.write(f"{window}, ")
+        dzn_file.write("\" |];\n")
 
-# To iterate through the vehicles:
-for vehicle in vehicles:
-    id = vehicle["id"]
-    canTake = vehicle["canTake"]
-    start = vehicle["start"]
-    end = vehicle["end"]
-    capacity = vehicle["capacity"]
-    availability = vehicle["availability"]
-    print(f"Vehicle ID: {id}, Can Take: {canTake}, Start Depot: {start}, End Depot: {end}, Capacity: {capacity}, Availability: {availability}")
+    # Write Patients
+    dzn_file.write("patients = [|")
+    for patient in data['patients']:
+        dzn_file.write(f"{patient['category']}, {patient['load']}, {patient['start']}, {patient['destination']}, {patient['end']}, \"{patient['rdvTime']}\", \"{patient['rdvDuration']}\", \"{patient['srvDuration']}\", ")
+    dzn_file.write("|];\n")
 
-# To iterate through the patients:
-for patient in patients:
-    id = patient["id"]
-    category = patient["category"]
-    load = patient["load"]
-    start = patient["start"]
-    destination = patient["destination"]
-    end = patient["end"]
-    rdvTime = patient["rdvTime"]
-    rdvDuration = patient["rdvDuration"]
-    srvDuration = patient["srvDuration"]
-    print(f"Patient ID: {id}, Category: {category}, Load: {load}, Start: {start}, Destination: {destination}, End: {end}, RDV Time: {rdvTime}, RDV Duration: {rdvDuration}, Service Duration: {srvDuration}")
+    # Write Distance Matrix
+    dzn_file.write("distMatrix = [|")
+    for row in data['distMatrix']:
+        dzn_file.write("|")
+        for distance in row:
+            dzn_file.write(f"{distance}, ")
+    dzn_file.write("|];\n")
 
-# To access the distance matrix:
-print("Distance Matrix:")
-for row in distMatrix:
-    print(row)
+    # Write Same Vehicle Backward
+    dzn_file.write(f"sameVehicleBackward = {data['sameVehicleBackward']};\n")
 
-# To access the sameVehicleBackWard flag:
-print("Same Vehicle Backward:", sameVehicleBackWard)
+
+
+# Run MiniZinc with the model file
+subprocess.run(["minizinc", "proj.mzn"])
