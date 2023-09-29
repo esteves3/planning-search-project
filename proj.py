@@ -6,40 +6,42 @@ with open('easy/easy_1.json', 'r') as input_json:
     data = json.load(input_json)
 
 # Create a MiniZinc data file
-with open('model_data.dzn', 'w') as data:
+with open('model_data.dzn', 'w') as dataFile:
+    # Write Same Vehicle Backward
+    dataFile.write(f"sameVehicleBackward = {'true' if data['sameVehicleBackward'] else 'false'};\n")
     # Write Max Wait Time
-    data.write(f"maxWaitTime = \"{data['maxWaitTime']}\";\n")
+    maxWaitTime = data['maxWaitTime']
+    dataFile.write(f"maxWaitTime = {int(maxWaitTime.split('h')[0]) * 60 + int(maxWaitTime.split('h')[1])};\n")
 
     # Write Places
-    data.write("places = [|")
+    dataFile.write("places = [|")
     for place in data['places']:
-        data.write(f"{place['category']}, ")
-    data.write("|];\n")
+        dataFile.write(f"{place['category']}, ")
+    dataFile.write("|];\n")
 
     # Write Vehicles
-    data.write("vehicles = [|")
+    dataFile.write("vehicles = [|")
     for vehicle in data['vehicles']:
-        data.write(f"{vehicle['canTake']}, {vehicle['start']}, {vehicle['end']}, {vehicle['capacity']}, \"")
+        dataFile.write(f"{vehicle['canTake']}, {vehicle['start']}, {vehicle['end']}, {vehicle['capacity']}, \"")
         for window in vehicle['availability']:
-            data.write(f"{window}, ")
-        data.write("\" |];\n")
+            dataFile.write(f"{window}, ")
+        dataFile.write("\" |];\n")
 
     # Write Patients
-    data.write("patients = [|")
+    dataFile.write("patients = [|")
     for patient in data['patients']:
-        data.write(f"{patient['category']}, {patient['load']}, {patient['start']}, {patient['destination']}, {patient['end']}, \"{patient['rdvTime']}\", \"{patient['rdvDuration']}\", \"{patient['srvDuration']}\", ")
-    data.write("|];\n")
+        dataFile.write(f"{patient['category']}, {patient['load']}, {patient['start']}, {patient['destination']}, {patient['end']}, \"{patient['rdvTime']}\", \"{patient['rdvDuration']}\", \"{patient['srvDuration']}\", ")
+    dataFile.write("|];\n")
 
     # Write Distance Matrix
-    data.write("distMatrix = [|")
+    dataFile.write("distMatrix = [|")
     for row in data['distMatrix']:
-        data.write("|")
+        dataFile.write("|")
         for distance in row:
-            data.write(f"{distance}, ")
-    data.write("|];\n")
+            dataFile.write(f"{distance}, ")
+    dataFile.write("|];\n")
 
-    # Write Same Vehicle Backward
-    data.write(f"sameVehicleBackward = {data['sameVehicleBackward']};\n")
+    
 
 
-subprocess.run(["minizinc", "model.mzn"])
+subprocess.run(["minizinc", "model.mzn", "model_data.dzn"])
