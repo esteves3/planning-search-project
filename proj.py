@@ -1,46 +1,38 @@
 import json
 import subprocess
 
+def stringHoursToMinute(str):
+    return int(str.split('h')[0]) * 60 + int(str.split('h')[1])
+
 # Load the JSON data from a file
 with open('easy/easy_1.json', 'r') as input_json:
     data = json.load(input_json)
 
 # Create a MiniZinc data file
 with open('model_data.dzn', 'w') as dataFile:
+    dataFile.write(f"numRequests = {len(data['patients'])};\n")
     # Write Same Vehicle Backward
     dataFile.write(f"sameVehicleBackward = {'true' if data['sameVehicleBackward'] else 'false'};\n")
     # Write Max Wait Time
-    maxWaitTime = data['maxWaitTime']
-    dataFile.write(f"maxWaitTime = {int(maxWaitTime.split('h')[0]) * 60 + int(maxWaitTime.split('h')[1])};\n")
+    dataFile.write(f"maxWaitTime = {stringHoursToMinute(data['maxWaitTime'])};\n")
 
-    # Write Places
-    dataFile.write("places = [|")
-    for place in data['places']:
-        dataFile.write(f"{place['category']}, ")
-    dataFile.write("|];\n")
-
-    # Write Vehicles
-    dataFile.write("vehicles = [|")
-    for vehicle in data['vehicles']:
-        dataFile.write(f"{vehicle['canTake']}, {vehicle['start']}, {vehicle['end']}, {vehicle['capacity']}, \"")
-        for window in vehicle['availability']:
-            dataFile.write(f"{window}, ")
-        dataFile.write("\" |];\n")
-
-    # Write Patients
-    dataFile.write("patients = [|")
-    for patient in data['patients']:
-        dataFile.write(f"{patient['category']}, {patient['load']}, {patient['start']}, {patient['destination']}, {patient['end']}, \"{patient['rdvTime']}\", \"{patient['rdvDuration']}\", \"{patient['srvDuration']}\", ")
-    dataFile.write("|];\n")
-
-    # Write Distance Matrix
-    dataFile.write("distMatrix = [|")
-    for row in data['distMatrix']:
-        dataFile.write("|")
-        for distance in row:
-            dataFile.write(f"{distance}, ")
-    dataFile.write("|];\n")
-
+  
+    # Write starting points
+    dataFile.write(f"start = {list(map(lambda x: x['start'], data['patients']))}\n")
+    # Write care center points
+    dataFile.write(f"dest = {list(map(lambda x: x['destination'], data['patients']))}\n")
+    # Write return points
+    dataFile.write(f"ret = {list(map(lambda x: x['end'], data['patients']))}\n")
+    # Write sests ocuppied by patient
+    dataFile.write(f"l = {list(map(lambda x: x['load'], data['patients']))}\n")
+    # Write sests ocuppied by patient
+    dataFile.write(f"u = {list(map(lambda x: stringHoursToMinute(x['rdvTime']), data['patients']))}\n")
+    # Write sests ocuppied by patient
+    dataFile.write(f"d = {list(map(lambda x: stringHoursToMinute(x['rdvDuration']), data['patients']))}\n")
+    # Write sests ocuppied by patient
+    dataFile.write(f"p = {list(map(lambda x: stringHoursToMinute(data['maxWaitTime']), data['patients']))}\n")
+    # Write sests ocuppied by patient
+    dataFile.write(f"c = {list(map(lambda x: x['category'], data['patients']))}\n")
     
 
 
