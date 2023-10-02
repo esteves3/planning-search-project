@@ -18,21 +18,21 @@ with open('model_data.dzn', 'w') as dataFile:
 
   
     # Write starting points
-    dataFile.write(f"start = {list(map(lambda x: x['start'], data['patients']))}\n")
+    dataFile.write(f"start = {list(map(lambda x: x['start'], data['patients']))};\n")
     # Write care center points
-    dataFile.write(f"dest = {list(map(lambda x: x['destination'], data['patients']))}\n")
+    dataFile.write(f"dest = {list(map(lambda x: x['destination'], data['patients']))};\n")
     # Write return points
-    dataFile.write(f"ret = {list(map(lambda x: x['end'], data['patients']))}\n")
+    dataFile.write(f"ret = {list(map(lambda x: x['end'], data['patients']))};\n")
     # Write sests ocuppied by patient
-    dataFile.write(f"l = {list(map(lambda x: x['load'], data['patients']))}\n")
+    dataFile.write(f"l = {list(map(lambda x: x['load'], data['patients']))};\n")
     # Write sests ocuppied by patient
-    dataFile.write(f"u = {list(map(lambda x: stringHoursToMinute(x['rdvTime']), data['patients']))}\n")
+    dataFile.write(f"u = {list(map(lambda x: stringHoursToMinute(x['rdvTime']), data['patients']))};\n")
     # Write sests ocuppied by patient
-    dataFile.write(f"d = {list(map(lambda x: stringHoursToMinute(x['rdvDuration']), data['patients']))}\n")
+    dataFile.write(f"d = {list(map(lambda x: stringHoursToMinute(x['rdvDuration']), data['patients']))};\n")
     # Write sests ocuppied by patient
-    dataFile.write(f"p = {list(map(lambda x: stringHoursToMinute(data['maxWaitTime']), data['patients']))}\n")
+    dataFile.write(f"p = {list(map(lambda x: stringHoursToMinute(data['maxWaitTime']), data['patients']))};\n")
     # Write sests ocuppied by patient
-    dataFile.write(f"c = {list(map(lambda x: x['category'], data['patients']))}\n")
+    dataFile.write(f"c = {list(map(lambda x: x['category'], data['patients']))};\n")
     
 
 
