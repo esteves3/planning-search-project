@@ -13,6 +13,7 @@ with open('model_data.dzn', 'w') as dataFile:
     dataFile.write(f"numRequests = {len(data['patients'])};\n")
     dataFile.write(f"numVehicles = {len(data['vehicles'])};\n")
     dataFile.write(f"maxCategoryVehicle = {len(max(data['vehicles'], key= lambda x: len(x['canTake']))['canTake'])};\n")
+    dataFile.write(f"distMatrixLen = {len(data['distMatrix'])};\n")
     # Write Same Vehicle Backward
     dataFile.write(f"sameVehicleBackward = {'true' if data['sameVehicleBackward'] else 'false'};\n")
     # Write Max Wait Time
@@ -31,6 +32,8 @@ with open('model_data.dzn', 'w') as dataFile:
     dataFile.write(f"u = {list(map(lambda x: stringHoursToMinute(x['rdvTime']), data['patients']))};\n")
     # Write appointment duration
     dataFile.write(f"d = {list(map(lambda x: stringHoursToMinute(x['rdvDuration']), data['patients']))};\n")
+    # Write patient duration time to enter the vehicle
+    dataFile.write(f"srvDuration = {list(map(lambda x: stringHoursToMinute(x['srvDuration']), data['patients']))};\n")
     # Write wait time
     dataFile.write(f"p = {list(map(lambda x: stringHoursToMinute(data['maxWaitTime']), data['patients']))};\n")
     # Write patient category
@@ -39,13 +42,20 @@ with open('model_data.dzn', 'w') as dataFile:
     # Write vehicles capacity
     dataFile.write(f"k = {list(map(lambda x: x['capacity'], data['vehicles']))};\n")
     # Write patient category
-    #dataFile.write(f"C = {list(map(lambda x: (x['canTake']), data['vehicles']))};\n")
     dataFile.write("C = [|")
     for v in data['vehicles']:
-        for can in v['canTake']:
-            dataFile.write(f"{can},")
+        for canTake in v['canTake']:
+            dataFile.write(f"{canTake},")
         dataFile.write('|')
-    dataFile.write("];")
+    dataFile.write("];\n")
+
+    # Write travel times
+    dataFile.write("T = [|")
+    for row in data['distMatrix']:
+        for col in row:
+            dataFile.write(f"{col},")
+        dataFile.write('|')
+    dataFile.write("];\n")
     
 
 
