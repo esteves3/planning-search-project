@@ -33,7 +33,7 @@ with open('model_data.dzn', 'w') as dataFile:
     # Write appointment duration
     dataFile.write(f"d = {list(map(lambda x: stringHoursToMinute(x['rdvDuration']), data['patients']))};\n")
     # Write patient duration time to enter the vehicle
-    dataFile.write(f"srvDuration = {list(map(lambda x: stringHoursToMinute(x['srvDuration']), data['patients']))};\n")
+    dataFile.write(f"srv = {list(map(lambda x: stringHoursToMinute(x['srvDuration']), data['patients']))};\n")
     # Write wait time
     dataFile.write(f"p = {list(map(lambda x: stringHoursToMinute(data['maxWaitTime']), data['patients']))};\n")
     # Write patient category

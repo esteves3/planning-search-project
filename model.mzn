@@ -16,7 +16,7 @@ array[R] of var int: ret;
 array[R] of var int: l;
 array[R] of var int: u;
 array[R] of var int: d;
-array[R] of var int: srvDuration;
+array[R] of var int: srv;
 array[R] of var int: p;
 array[R] of var int: c;
 
@@ -49,8 +49,10 @@ array[R] of var int: vb = [-1 | i in R];
 var int: H = 99999;
 
 constraint forall(i in R)(
+    df[i] = ef[i] - sf[i] /\
     sf[i] >= 0 /\ sf[i] <= u[i] /\
     ef[i] >= 0 /\ ef[i] <= u[i] /\
+    db[i] = eb[i] - sb[i] /\
     sb[i] >= u[i] + d[i] /\ sb[i] <= H /\
     eb[i] >= u[i] + d[i] /\ eb[i] <= H
 );
@@ -67,7 +69,6 @@ constraint forall(i in R)(
     (S[i] = 1) = (xf[i] = 1 \/ xb[i] = 1)
     %4
     /\
-
     %7
     df[i] >= T[start[i], dest[i]] /\
     db[i] >= T[dest[i], ret[i]]
@@ -79,9 +80,66 @@ constraint forall(i in R)(
     %8
     /\
     %16
-    (sameVehicleBackward) 
+    (not sameVehicleBackward \/ (vf[i] == vb[i]))
     %16
 );
+
+%6
+constraint forall(i, j in R)(
+    if i != j then
+        if(vf[i] == vf[j]) then
+            (
+                sf[j] - sf[i] >= T[start[i], start[j]] + srv[i] 
+                \/ 
+                sf[i] - sf[j] >= T[start[j], start[i]] + srv[j]
+            ) 
+            /\
+            (
+                sf[j] - ef[i] >= T[start[i], dest[j]] 
+                \/ 
+                ef[i] - sf[j] >= T[dest[j], start[i]] + srv[j] + srv[i]
+            ) 
+            /\
+            (
+                ef[j] - sf[i] >= T[dest[i], start[j]] + srv[i] + srv[j]
+                \/
+                sf[i] - ef[j] >= T[start[j], dest[i]]
+            )
+            /\
+            (
+                ef[j] - ef[i] >= T[dest[i], dest[j]] + srv[j]
+                \/
+                ef[i] - ef[j] >= T[dest[j], dest[i]] + srv[i]
+            )
+        endif
+        if(vb[i] == vb[j]) then
+            (
+                sb[j] - sb[i] >= T[dest[i], dest[j]] + srv[i] 
+                \/ 
+                sb[i] - sb[j] >= T[dest[j], dest[i]] + srv[j]
+            ) 
+            /\
+            (
+                sb[j] - eb[i] >= T[dest[i], ret[j]] 
+                \/ 
+                eb[i] - sb[j] >= T[ret[j], dest[i]] + srv[j] + srv[i]
+            ) 
+            /\
+            (
+                eb[j] - sb[i] >= T[ret[i], dest[j]] + srv[i] + srv[j]
+                \/
+                sb[i] - eb[j] >= T[dest[j], ret[i]]
+            )
+            /\
+            (
+                eb[j] - eb[i] >= T[ret[i], ret[j]] + srv[j]
+                \/
+                eb[i] - eb[j] >= T[ret[j], ret[i]] + srv[i]
+            )
+        endif
+    endif
+);
+%6
 
 
 constraint forall(j in V)(
