@@ -141,12 +141,13 @@ constraint forall(i, j in R)(
 );
 %6
 
-
+%9
 constraint forall(j in V)(
     cumulative(
         [l[i] | i in R where v(i) = j],
         [kj]
     )
 );
+%9
 
 solve satisfy;
