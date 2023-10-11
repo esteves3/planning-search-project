@@ -56,11 +56,11 @@ constraint forall(i in R)(
 );
 
 constraint forall(i in R)(
-    vf[i] in [j | j in V where c[i] in C[j]]
+    vf[i] in {j | j in V where c[i] in C[j]}
 );
 
 constraint forall(i in R)(
-    vb[i] in [j | j in V where c[i] in C[j]]
+    vb[i] in {j | j in V where c[i] in C[j]}
 );
 %3
 
