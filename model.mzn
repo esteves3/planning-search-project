@@ -1,29 +1,27 @@
-
 include "cumulative.mzn";
 
 int: numRequests;
 set of int: R = 1..numRequests;
 int: numVehicles;
-int: maxCategoryVehicle;
 int: distMatrixLen;
 
 bool: sameVehicleBackward;
 int: maxWaitTime;
 
-array[R] of var int: start;
-array[R] of var int: dest;
-array[R] of var int: ret;
-array[R] of var int: l;
-array[R] of var int: u;
-array[R] of var int: d;
-array[R] of var int: srv;
-array[R] of var int: p;
-array[R] of var int: c;
+array[R] of int: start;
+array[R] of int: dest;
+array[R] of int: ret;
+array[R] of int: l;
+array[R] of int: u;
+array[R] of int: d;
+array[R] of int: srv;
+array[R] of int: p;
+array[R] of int: c;
 
 
 set of int: V = 1..numVehicles;
 
-array[V] of var int: k;
+array[V] of int: k;
 array[V] of set of int: C;
 
 array[1..distMatrixLen, 1..distMatrixLen] of int: T;
@@ -58,8 +56,11 @@ constraint forall(i in R)(
 );
 
 constraint forall(i in R)(
-    vf[i] in {j | j in V where c[i] in C[j]} /\
-    vb[i] in {j | j in V where c[i] in C[j]} 
+    vf[i] in [j | j in V where c[i] in C[j]]
+);
+
+constraint forall(i in R)(
+    vb[i] in [j | j in V where c[i] in C[j]]
 );
 %3
 
@@ -142,15 +143,24 @@ constraint forall(i, j in R) (
 %6
 
 %9
-
 constraint forall(j in V)(
     cumulative(
-        [sf[i] | i in R where vf[i] = j /\ xf[i] = 1],
-        [df[i] | i in R where vf[i] = j /\ xf[i] = 1],
-        [l[i] | i in R where vf[i] = j /\ xf[i] = 1],
+        [sf[i] * bool2int(vf[i] = j /\ xf[i] = 1) | i in R],
+        [df[i] * bool2int(vf[i] = j /\ xf[i] = 1) | i in R],
+        [l[i]  * bool2int(vf[i] = j /\ xf[i] = 1) | i in R],
         k[j]
     )
 );
+
+constraint forall(j in V)(
+    cumulative(
+        [sb[i] * bool2int(vb[i] = j /\ xb[i] = 1) | i in R],
+        [db[i] * bool2int(vb[i] = j /\ xb[i] = 1) | i in R],
+        [l[i]  * bool2int(vb[i] = j /\ xb[i] = 1) | i in R],
+        k[j]
+    )
+);
+
 %9
 
 solve satisfy;

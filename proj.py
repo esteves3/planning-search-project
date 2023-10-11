@@ -12,7 +12,7 @@ with open('easy/easy_1.json', 'r') as input_json:
 with open('model_data.dzn', 'w') as dataFile:
     dataFile.write(f"numRequests = {len(data['patients'])};\n")
     dataFile.write(f"numVehicles = {len(data['vehicles'])};\n")
-    dataFile.write(f"maxCategoryVehicle = {len(max(data['vehicles'], key= lambda x: len(x['canTake']))['canTake'])};\n")
+    # dataFile.write(f"maxCategoryVehicle = {len(max(data['vehicles'], key= lambda x: len(x['canTake']))['canTake'])};\n")
     dataFile.write(f"distMatrixLen = {len(data['distMatrix'])};\n")
     # Write Same Vehicle Backward
     dataFile.write(f"sameVehicleBackward = {'true' if data['sameVehicleBackward'] else 'false'};\n")
