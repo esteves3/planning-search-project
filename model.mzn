@@ -86,57 +86,57 @@ constraint forall(i in R)(
 
 %6
 constraint forall(i, j in R)(
-    if i != j then
-        if(vf[i] == vf[j]) then
-            (
-                sf[j] - sf[i] >= T[start[i], start[j]] + srv[i] 
-                \/ 
-                sf[i] - sf[j] >= T[start[j], start[i]] + srv[j]
-            ) 
-            /\
-            (
-                sf[j] - ef[i] >= T[start[i], dest[j]] 
-                \/ 
-                ef[i] - sf[j] >= T[dest[j], start[i]] + srv[j] + srv[i]
-            ) 
-            /\
-            (
-                ef[j] - sf[i] >= T[dest[i], start[j]] + srv[i] + srv[j]
-                \/
-                sf[i] - ef[j] >= T[start[j], dest[i]]
-            )
-            /\
-            (
-                ef[j] - ef[i] >= T[dest[i], dest[j]] + srv[j]
-                \/
-                ef[i] - ef[j] >= T[dest[j], dest[i]] + srv[i]
-            )
-        endif
-        if(vb[i] == vb[j]) then
-            (
-                sb[j] - sb[i] >= T[dest[i], dest[j]] + srv[i] 
-                \/ 
-                sb[i] - sb[j] >= T[dest[j], dest[i]] + srv[j]
-            ) 
-            /\
-            (
-                sb[j] - eb[i] >= T[dest[i], ret[j]] 
-                \/ 
-                eb[i] - sb[j] >= T[ret[j], dest[i]] + srv[j] + srv[i]
-            ) 
-            /\
-            (
-                eb[j] - sb[i] >= T[ret[i], dest[j]] + srv[i] + srv[j]
-                \/
-                sb[i] - eb[j] >= T[dest[j], ret[i]]
-            )
-            /\
-            (
-                eb[j] - eb[i] >= T[ret[i], ret[j]] + srv[j]
-                \/
-                eb[i] - eb[j] >= T[ret[j], ret[i]] + srv[i]
-            )
-        endif
+    if i != j /\ vf[i] == vf[j] then
+        (
+            sf[j] - sf[i] >= T[start[i], start[j]] + srv[i] 
+            \/ 
+            sf[i] - sf[j] >= T[start[j], start[i]] + srv[j]
+        ) 
+        /\
+        (
+            sf[j] - ef[i] >= T[start[i], dest[j]] 
+            \/ 
+            ef[i] - sf[j] >= T[dest[j], start[i]] + srv[j] + srv[i]
+        ) 
+        /\
+        (
+            ef[j] - sf[i] >= T[dest[i], start[j]] + srv[i] + srv[j]
+            \/
+            sf[i] - ef[j] >= T[start[j], dest[i]]
+        )
+        /\
+        (
+            ef[j] - ef[i] >= T[dest[i], dest[j]] + srv[j]
+            \/
+            ef[i] - ef[j] >= T[dest[j], dest[i]] + srv[i]
+        )
+    endif
+);
+constraint forall(i, j in R) (
+    if i != j /\ vb[i] == vb[j] then
+        (
+            sb[j] - sb[i] >= T[dest[i], dest[j]] + srv[i] 
+            \/ 
+            sb[i] - sb[j] >= T[dest[j], dest[i]] + srv[j]
+        ) 
+        /\
+        (
+            sb[j] - eb[i] >= T[dest[i], ret[j]] 
+            \/ 
+            eb[i] - sb[j] >= T[ret[j], dest[i]] + srv[j] + srv[i]
+        ) 
+        /\
+        (
+            eb[j] - sb[i] >= T[ret[i], dest[j]] + srv[i] + srv[j]
+            \/
+            sb[i] - eb[j] >= T[dest[j], ret[i]]
+        )
+        /\
+        (
+            eb[j] - eb[i] >= T[ret[i], ret[j]] + srv[j]
+            \/
+            eb[i] - eb[j] >= T[ret[j], ret[i]] + srv[i]
+        )
     endif
 );
 %6
