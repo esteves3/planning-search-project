@@ -1,5 +1,5 @@
-include "cumulative.mzn";
 
+include "cumulative.mzn";
 
 int: numRequests;
 set of int: R = 1..numRequests;
@@ -24,7 +24,7 @@ array[R] of var int: c;
 set of int: V = 1..numVehicles;
 
 array[V] of var int: k;
-array[V, 1..maxCategoryVehicle] of int: C;
+array[V] of set of int: C;
 
 array[1..distMatrixLen, 1..distMatrixLen] of int: T;
 
@@ -142,10 +142,13 @@ constraint forall(i, j in R) (
 %6
 
 %9
+
 constraint forall(j in V)(
     cumulative(
-        [l[i] | i in R where v(i) = j],
-        [kj]
+        [sf[i] | i in R where vf[i] = j /\ xf[i] = 1],
+        [df[i] | i in R where vf[i] = j /\ xf[i] = 1],
+        [l[i] | i in R where vf[i] = j /\ xf[i] = 1],
+        k[j]
     )
 );
 %9

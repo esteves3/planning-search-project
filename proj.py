@@ -42,11 +42,12 @@ with open('model_data.dzn', 'w') as dataFile:
     # Write vehicles capacity
     dataFile.write(f"k = {list(map(lambda x: x['capacity'], data['vehicles']))};\n")
     # Write patient category
-    dataFile.write("C = [|")
+    dataFile.write("C = [")
     for v in data['vehicles']:
+        dataFile.write('{')
         for canTake in v['canTake']:
             dataFile.write(f"{canTake},")
-        dataFile.write('|')
+        dataFile.write('},')
     dataFile.write("];\n")
 
     # Write travel times
