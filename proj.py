@@ -1,63 +1,50 @@
 import json
 import subprocess
+from minizinc import Instance, Model, Solver
 
 def stringHoursToMinute(str):
     return int(str.split('h')[0]) * 60 + int(str.split('h')[1])
+
+model = Model("./model.mzn")
+gecode = Solver.lookup("gecode")
+
+instance = Instance(gecode, model)
 
 # Load the JSON data from a file
 with open('easy/easy_1.json', 'r') as input_json:
     data = json.load(input_json)
 
-# Create a MiniZinc data file
-with open('model_data.dzn', 'w') as dataFile:
-    dataFile.write(f"numRequests = {len(data['patients'])};\n")
-    dataFile.write(f"numVehicles = {len(data['vehicles'])};\n")
-    # dataFile.write(f"maxCategoryVehicle = {len(max(data['vehicles'], key= lambda x: len(x['canTake']))['canTake'])};\n")
-    dataFile.write(f"distMatrixLen = {len(data['distMatrix'])};\n")
-    # Write Same Vehicle Backward
-    dataFile.write(f"sameVehicleBackward = {'true' if data['sameVehicleBackward'] else 'false'};\n")
-    # Write Max Wait Time
-    dataFile.write(f"maxWaitTime = {stringHoursToMinute(data['maxWaitTime'])};\n")
+instance['numRequests'] = len(data['patients'])
+instance['numVehicles'] = len(data['vehicles'])
+instance['distMatrixLen'] = len(data['distMatrix'])
+instance['sameVehicleBackward'] = data['sameVehicleBackward']
+instance['maxWaitTime'] = stringHoursToMinute(data['maxWaitTime'])
+instance['start'] = list(map(lambda x: int(x['start']), data['patients']))
+instance['dest'] = list(map(lambda x: int(x['destination']), data['patients']))
+instance['ret'] = list(map(lambda x: int(x['end']), data['patients']))
+instance['l'] = list(map(lambda x: int(x['load']), data['patients']))
+instance['u'] = list(map(lambda x: stringHoursToMinute(x['rdvTime']), data['patients']))
+instance['d'] = list(map(lambda x: stringHoursToMinute(x['rdvDuration']), data['patients']))
+instance['srv'] = list(map(lambda x: stringHoursToMinute(x['srvDuration']), data['patients']))
+instance['p'] = list(map(lambda x: stringHoursToMinute(data['maxWaitTime']), data['patients']))
+instance['c'] = list(map(lambda x: int(x['category']), data['patients']))
 
-  
-    # Write starting points
-    dataFile.write(f"start = {list(map(lambda x: x['start'], data['patients']))};\n")
-    # Write care center points
-    dataFile.write(f"dest = {list(map(lambda x: x['destination'], data['patients']))};\n")
-    # Write return points
-    dataFile.write(f"ret = {list(map(lambda x: x['end'], data['patients']))};\n")
-    # Write seats ocuppied by patient
-    dataFile.write(f"l = {list(map(lambda x: x['load'], data['patients']))};\n")
-    # Write appointment hour
-    dataFile.write(f"u = {list(map(lambda x: stringHoursToMinute(x['rdvTime']), data['patients']))};\n")
-    # Write appointment duration
-    dataFile.write(f"d = {list(map(lambda x: stringHoursToMinute(x['rdvDuration']), data['patients']))};\n")
-    # Write patient duration time to enter the vehicle
-    dataFile.write(f"srv = {list(map(lambda x: stringHoursToMinute(x['srvDuration']), data['patients']))};\n")
-    # Write wait time
-    dataFile.write(f"p = {list(map(lambda x: stringHoursToMinute(data['maxWaitTime']), data['patients']))};\n")
-    # Write patient category
-    dataFile.write(f"c = {list(map(lambda x: x['category'], data['patients']))};\n")
-
-    # Write vehicles capacity
-    dataFile.write(f"k = {list(map(lambda x: x['capacity'], data['vehicles']))};\n")
-    # Write patient category
-    dataFile.write("C = [")
-    for v in data['vehicles']:
-        dataFile.write('{')
-        for canTake in v['canTake']:
-            dataFile.write(f"{canTake},")
-        dataFile.write('},')
-    dataFile.write("];\n")
-
-    # Write travel times
-    dataFile.write("T = [|")
-    for row in data['distMatrix']:
-        for col in row:
-            dataFile.write(f"{col},")
-        dataFile.write('|')
-    dataFile.write("];\n")
-    
+k = []
+C = []
+vas = []
+vab = []
+for v in data['vehicles']:
+    for a in v['availability']:
+        k.append(int(v['capacity']))
+        vas.append(stringHoursToMinute(a.split(':')[0]))
+        vab.append(stringHoursToMinute(a.split(':')[1]))
+        C.append(set(list(map(lambda x: int(x), v['canTake']))))
 
 
-subprocess.run(["minizinc", "model.mzn", "model_data.dzn"])
+instance['k'] = k
+instance['C'] = C
+instance['vas'] = vas
+instance['vab'] = vab
+instance['T'] = data['distMatrix']
+
+instance.solve()

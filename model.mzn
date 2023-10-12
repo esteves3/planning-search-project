@@ -1,5 +1,5 @@
 include "cumulative.mzn";
-
+include "globals.mzn";  % Include the globals module for array operations
 int: numRequests;
 set of int: R = 1..numRequests;
 int: numVehicles;
@@ -21,10 +21,12 @@ array[R] of int: c;
 
 set of int: V = 1..numVehicles;
 
-array[V] of int: k;
 array[V] of set of int: C;
+array[V] of int: k;
+array[V] of int: vas;
+array[V] of int: vab;
 
-array[1..distMatrixLen, 1..distMatrixLen] of int: T;
+array[0..<distMatrixLen, 0..<distMatrixLen] of int: T;
 
 
 %2
@@ -50,18 +52,16 @@ constraint forall(i in R)(
     df[i] = ef[i] - sf[i] /\
     sf[i] >= 0 /\ sf[i] <= u[i] /\
     ef[i] >= 0 /\ ef[i] <= u[i] /\
-    db[i] = eb[i] - sb[i] /\
+    %db[i] = eb[i] - sb[i] /\
     sb[i] >= u[i] + d[i] /\ sb[i] <= H /\
     eb[i] >= u[i] + d[i] /\ eb[i] <= H
 );
 
-constraint forall(i in R)(
-    vf[i] in {j | j in V where c[i] in C[j]}
-);
 
 constraint forall(i in R)(
-    vb[i] in {j | j in V where c[i] in C[j]}
+    member([j | j in V where  c[i] in C[j]], vf[i])
 );
+
 %3
 
 
@@ -71,20 +71,20 @@ constraint forall(i in R)(
     %4
     /\
     %7
-    df[i] >= T[start[i], dest[i]] /\
-    db[i] >= T[dest[i], ret[i]]
+    %(start[i] != -1 /\ df[i] >= T[start[i], dest[i]]) /\
+    (ret[i] != -1 /\ db[i] >= T[dest[i], ret[i]])
     %7
-    /\
+    %/\
     %8
-    df[i] <= p[i] /\
-    db[i] <= p[i]
+    %df[i] <= p[i] /\
+    %db[i] <= p[i]
     %8
-    /\
+    %/\
     %16
-    (not sameVehicleBackward \/ (vf[i] == vb[i]))
+    %(not sameVehicleBackward \/ (vf[i] == vb[i]))
     %16
 );
-
+/*
 %6
 constraint forall(i, j in R)(
     if i != j /\ vf[i] == vf[j] then
@@ -162,5 +162,4 @@ constraint forall(j in V)(
 );
 
 %9
-
-solve satisfy;
+*/
