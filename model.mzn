@@ -13,9 +13,9 @@ array[R] of int: dest;
 array[R] of int: ret;
 array[R] of 1..: l;
 array[R] of int: u;
-array[R] of int: d;
-array[R] of int: srv;
-array[R] of int: p;
+array[R] of 0..: d;
+array[R] of 0..: srv;
+array[R] of 0..: p;
 array[R] of int: c;
 
 
