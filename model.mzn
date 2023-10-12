@@ -11,7 +11,7 @@ int: maxWaitTime;
 array[R] of int: start;
 array[R] of int: dest;
 array[R] of int: ret;
-array[R] of int: l;
+array[R] of 1..: l;
 array[R] of int: u;
 array[R] of int: d;
 array[R] of int: srv;
@@ -24,7 +24,9 @@ set of int: V = 1..numVehicles;
 array[V] of set of int: C;
 array[V] of int: k;
 array[V] of int: vas;
-array[V] of int: vab;
+array[V] of int: vae;
+array[V] of int: vstart;
+array[V] of int: vend;
 
 array[0..<distMatrixLen, 0..<distMatrixLen] of int: T;
 
@@ -45,26 +47,28 @@ array[R] of var 0..: eb;
 array[R] of var 0..: db;
 array[R] of var 0..1: xb;
 array[R] of var int: vb;
-int: H = 99999;
+int: H = 24 * 60;
 
 constraint forall(i in R)(
     %3
     df[i] = ef[i] - sf[i] /\
-    sf[i] >= 0 /\ sf[i] <= u[i] /\
-    ef[i] >= 0 /\ ef[i] <= u[i] /\
     db[i] = eb[i] - sb[i] /\
-    sb[i] >= u[i] + d[i] /\ sb[i] <= H /\
-    eb[i] >= u[i] + d[i] /\ eb[i] <= H /\
-    member([j | j in V where  c[i] in C[j]], vf[i]) 
-    %3
-    /\
+    member([j | j in V where  c[i] in C[j]], vf[i])  /\
+    %14
+    sf[i] >= 0 /\ sf[i] <= u[i] - p[i] /\
+    ef[i] >= 0 /\ ef[i] <= u[i] - p[i] /\
+    sb[i] >= u[i] + d[i] + p[i] /\ sb[i] <= H  /\
+    eb[i] >= u[i] + d[i] + p[i] /\ eb[i] <= H  /\
+    %14 %3
     %4
-    (S[i] = 1) = (xf[i] = 1 \/ xb[i] = 1)
+    (S[i] = 1) <-> (xf[i] = 1 \/ xb[i] = 1) /* /\
+   (xf[i] = 1) <-> start[i] != -1 /\
+    (xb[i] = 1) <-> ret[i] != -1*/
     %4
     /\
     %7
-    ((start[i] != -1 /\ df[i] >= T[start[i], dest[i]]) \/ start[i] == -1) /\
-    ((ret[i] != -1 /\ db[i] >= T[dest[i], ret[i]]) \/ ret[i] == -1)
+    ((start[i] != -1 /\ df[i] >= T[start[i], dest[i]]) \/ start[i] = -1) /\
+    ((ret[i] != -1 /\ db[i] >= T[dest[i], ret[i]]) \/ ret[i] = -1)
     %7
     /\
     %8
@@ -72,7 +76,7 @@ constraint forall(i in R)(
     %8
     /\
     %16
-    (not sameVehicleBackward \/ (vf[i] == vb[i]))
+    (not sameVehicleBackward \/ (vf[i] = vb[i]))
     %16
 );
 
@@ -80,21 +84,22 @@ constraint forall(i in R)(
 
 %6
 constraint forall(i, j in R)(
-    if i != j /\ vf[i] == vf[j] then
+    if i != j /\ vf[i] = vf[j] /\ start[i] != -1 /\ start[j] != -1 
+    then
         (
-            sf[j] - sf[i] >= T[start[i], start[j]] + srv[i] 
+            (sf[j] - sf[i] >= T[start[i], start[j]] + srv[i])
             \/ 
-            sf[i] - sf[j] >= T[start[j], start[i]] + srv[j]
+            (sf[i] - sf[j] >= T[start[j], start[i]] + srv[j])
         ) 
         /\
         (
-            sf[j] - ef[i] >= T[start[i], dest[j]] 
+            (sf[j] - ef[i] >= T[start[i], dest[j]])
             \/ 
-            ef[i] - sf[j] >= T[dest[j], start[i]] + srv[j] + srv[i]
+            (ef[i] - sf[j] >= T[dest[j], start[i]] + srv[j] + srv[i])
         ) 
         /\
         (
-            ef[j] - sf[i] >= T[dest[i], start[j]] + srv[i] + srv[j]
+            (ef[j] - sf[i] >= T[dest[i], start[j]] + srv[i] + srv[j])
             \/
             sf[i] - ef[j] >= T[start[j], dest[i]]
         )
@@ -109,7 +114,7 @@ constraint forall(i, j in R)(
 
 
 constraint forall(i, j in R) (
-    if i != j /\ vb[i] == vb[j] then
+    if i != j /\ vb[i] == vb[j] /\ ret[i] != -1 /\ ret[j] != -1 then
         (
             sb[j] - sb[i] >= T[dest[i], dest[j]] + srv[i] 
             \/ 
@@ -156,4 +161,19 @@ constraint forall(j in V)(
 
 %9
 
+/*
+constraint forall(i in R, j in V)(
+    %15
+    vf[i] = j /\ sf[i] >= vas[j] + T[vstart[j], start[i]]
+    /\
+    vf[i] = j /\ ef[i] <= vae[j] - T[dest[i], vend[j]]
 
+    /\
+
+    vb[i] = j /\ sb[i] >= vas[j] + T[vstart[j], dest[i]]
+    /\
+    vb[i] = j /\ eb[i] <= vae[j] - T[ret[i], vend[j]]
+    %15
+)
+
+*/

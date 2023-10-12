@@ -1,5 +1,4 @@
 import json
-import subprocess
 from minizinc import Instance, Model, Solver
 
 def stringHoursToMinute(str):
@@ -11,11 +10,11 @@ gecode = Solver.lookup("gecode")
 instance = Instance(gecode, model)
 
 # Load the JSON data from a file
-with open('very_easy/very_easy_1.json', 'r') as input_json:
+with open('easy/easy_1.json', 'r') as input_json:
     data = json.load(input_json)
 
 instance['numRequests'] = len(data['patients'])
-instance['numVehicles'] = len(data['vehicles'])
+instance['numVehicles'] = sum(list(map(lambda x: len(x['availability']), data['vehicles'])))
 instance['distMatrixLen'] = len(data['distMatrix'])
 instance['sameVehicleBackward'] = data['sameVehicleBackward']
 instance['maxWaitTime'] = stringHoursToMinute(data['maxWaitTime'])
@@ -32,19 +31,25 @@ instance['c'] = list(map(lambda x: int(x['category']), data['patients']))
 k = []
 C = []
 vas = []
-vab = []
+vae = []
+vstart = []
+vend = []
 for v in data['vehicles']:
     for a in v['availability']:
         k.append(int(v['capacity']))
         vas.append(stringHoursToMinute(a.split(':')[0]))
-        vab.append(stringHoursToMinute(a.split(':')[1]))
+        vae.append(stringHoursToMinute(a.split(':')[1]))
+        vstart.append(int(v['start']))
+        vend.append(int(v['end']))
         C.append(set(list(map(lambda x: int(x), v['canTake']))))
 
 
 instance['k'] = k
 instance['C'] = C
 instance['vas'] = vas
-instance['vab'] = vab
+instance['vae'] = vae
+instance['vstart'] = vstart
+instance['vend'] = vend
 instance['T'] = data['distMatrix']
 
 
