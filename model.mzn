@@ -30,61 +30,54 @@ array[0..<distMatrixLen, 0..<distMatrixLen] of int: T;
 
 
 %2
-% Declare and initialize the array Si with false for all elements
-array[R] of var 0..1: S = [0 | i in R];
+array[R] of var 0..1: S;
 %2
 
 %3
-array[R] of var int: sf = [0 | i in R];
-array[R] of var int: ef = [0 | i in R];
-array[R] of var int: df = [ef[i] - sf[i] | i in R];
-array[R] of var 0..1: xf = [0 | i in R];
-array[R] of var int: vf = [-1 | i in R];
+array[R] of var 0..: sf;
+array[R] of var 0..: ef;
+array[R] of var 0..: df;
+array[R] of var 0..1: xf;
+array[R] of var int: vf;
 
-array[R] of var int: sb = [u[i] + d[i] | i in R];
-array[R] of var int: eb = [u[i] + d[i] | i in R];
-array[R] of var int: db = [eb[i] - sb[i] | i in R];
-array[R] of var 0..1: xb = [0 | i in R];
-array[R] of var int: vb = [-1 | i in R];
-var int: H = 99999;
+array[R] of var 0..: sb;
+array[R] of var 0..: eb;
+array[R] of var 0..: db;
+array[R] of var 0..1: xb;
+array[R] of var int: vb;
+int: H = 99999;
 
 constraint forall(i in R)(
+    %3
     df[i] = ef[i] - sf[i] /\
     sf[i] >= 0 /\ sf[i] <= u[i] /\
     ef[i] >= 0 /\ ef[i] <= u[i] /\
-    %db[i] = eb[i] - sb[i] /\
+    db[i] = eb[i] - sb[i] /\
     sb[i] >= u[i] + d[i] /\ sb[i] <= H /\
-    eb[i] >= u[i] + d[i] /\ eb[i] <= H
-);
-
-
-constraint forall(i in R)(
-    member([j | j in V where  c[i] in C[j]], vf[i])
-);
-
-%3
-
-
-constraint forall(i in R)(
+    eb[i] >= u[i] + d[i] /\ eb[i] <= H /\
+    member([j | j in V where  c[i] in C[j]], vf[i]) 
+    %3
+    /\
     %4
     (S[i] = 1) = (xf[i] = 1 \/ xb[i] = 1)
     %4
     /\
     %7
-    %(start[i] != -1 /\ df[i] >= T[start[i], dest[i]]) /\
-    (ret[i] != -1 /\ db[i] >= T[dest[i], ret[i]])
+    ((start[i] != -1 /\ df[i] >= T[start[i], dest[i]]) \/ start[i] == -1) /\
+    ((ret[i] != -1 /\ db[i] >= T[dest[i], ret[i]]) \/ ret[i] == -1)
     %7
-    %/\
+    /\
     %8
-    %df[i] <= p[i] /\
-    %db[i] <= p[i]
+    df[i] <= p[i] /\ db[i] <= p[i]
     %8
-    %/\
+    /\
     %16
-    %(not sameVehicleBackward \/ (vf[i] == vb[i]))
+    (not sameVehicleBackward \/ (vf[i] == vb[i]))
     %16
 );
-/*
+
+
+
 %6
 constraint forall(i, j in R)(
     if i != j /\ vf[i] == vf[j] then
@@ -113,6 +106,8 @@ constraint forall(i, j in R)(
         )
     endif
 );
+
+
 constraint forall(i, j in R) (
     if i != j /\ vb[i] == vb[j] then
         (
@@ -150,9 +145,7 @@ constraint forall(j in V)(
         [l[i]  * bool2int(vf[i] = j /\ xf[i] = 1) | i in R],
         k[j]
     )
-);
-
-constraint forall(j in V)(
+    /\
     cumulative(
         [sb[i] * bool2int(vb[i] = j /\ xb[i] = 1) | i in R],
         [db[i] * bool2int(vb[i] = j /\ xb[i] = 1) | i in R],
@@ -162,4 +155,5 @@ constraint forall(j in V)(
 );
 
 %9
-*/
+
+

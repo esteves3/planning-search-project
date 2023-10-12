@@ -11,7 +11,7 @@ gecode = Solver.lookup("gecode")
 instance = Instance(gecode, model)
 
 # Load the JSON data from a file
-with open('easy/easy_1.json', 'r') as input_json:
+with open('very_easy/very_easy_1.json', 'r') as input_json:
     data = json.load(input_json)
 
 instance['numRequests'] = len(data['patients'])
@@ -47,4 +47,6 @@ instance['vas'] = vas
 instance['vab'] = vab
 instance['T'] = data['distMatrix']
 
-instance.solve()
+
+result = instance.solve()
+print(result['df'])
