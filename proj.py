@@ -54,4 +54,4 @@ instance['T'] = data['distMatrix']
 
 
 result = instance.solve()
-print(result['df'])
+print(result['S'])
