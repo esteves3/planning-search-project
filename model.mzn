@@ -151,7 +151,7 @@ constraint forall(i, j in R) (
     endif
 );
 %6
-
+/*
 %9
 constraint forall(j in V)(
     cumulative(
@@ -185,6 +185,6 @@ constraint forall(i in R, j in V)(
     ret[i] != -1 /\ vb[i] = j /\ eb[i] <= vae[j] - T[ret[i], vend[j]]
     %15
 );
-
+*/
 
 solve maximize sum(S);

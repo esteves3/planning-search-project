@@ -4,7 +4,7 @@ from minizinc import Instance, Model, Solver
 def stringHoursToMinute(str):
     return int(str.split('h')[0]) * 60 + int(str.split('h')[1])
 
-model = Model("./model.mzn")
+model = Model("./model2.mzn")
 gecode = Solver.lookup("gecode")
 
 instance = Instance(gecode, model)
@@ -54,4 +54,6 @@ instance['T'] = data['distMatrix']
 
 
 result = instance.solve()
-print(result['S'])
+
+print( result['vf'])
+print( result['vb'])
