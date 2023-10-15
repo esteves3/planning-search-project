@@ -75,7 +75,7 @@ constraint forall(i in R)(
     (xb[i] = 1) -> (ret[i] != -1)
 );
 
-
+/*
 %6
 %FORWARD - FORWARD
 constraint forall(i, j in R)(
@@ -136,7 +136,7 @@ constraint forall(i, j in R)(
                         \/ eb[i] - eb[j] >= T[dest[j], dest[i]] + srv[i])
     endif
 );
-
+*/
 %7
 constraint forall(i in R)(
     if (xf[i] = 1 /\ start[i] != -1) then 
@@ -181,8 +181,8 @@ constraint forall(j in V)(
 
 
 %15
-constraint forall(i in R)(
+/*constraint forall(i in R)(
     sf[i] >= 
-)
+);*/
 
-solve maximize sum(xf) + sum(xb);
+solve maximize sum(S);
