@@ -1,0 +1,20 @@
+{
+    "trips": [
+        {
+            "id": 4,
+            "isForward": 1,
+            "startHour": "10h13",
+            "duration": "00h11",
+            "endHour": "10h24",
+            "vehicle": 1
+        },
+        {
+            "id": 4,
+            "isForward": 0,
+            "startHour": "11h06",
+            "duration": "00h11",
+            "endHour": "11h17",
+            "vehicle": 1
+        }
+    ]
+}
