@@ -116,19 +116,51 @@ print("Model solved")
 print("Defining output...")
 outputData = {}
 outputList = []
+vehicles = []
 
 for i in range(len(idsA)):
     if result['S'][i] == 1:
         outputList.append({
             'id': idsA[i],
             'isForward': isForward[i],
-            'startHour': minuteToStringHours(result['sA'][i]),
-            'duration': minuteToStringHours(result['dA'][i]),
-            'endHour': minuteToStringHours(result['eA'][i]),
+            'startHour': result['sA'][i],
+            'duration': result['dA'][i],
+            'endHour': result['eA'][i],
             'vehicle': result['vA'][i]
         })
 
-outputData['trips'] = outputList
+outputList.sort(key=lambda x: x["startHour"])
+
+
+for v in range(len(idsV)):
+    trips = []
+    currentVehicleId = idsV[v]
+    for t in range(len(outputList)):
+        if currentVehicleId == idsV[outputList[t]["vehicle"]]:
+            trips.append(
+                {
+                    "origin" : org[t],
+                    "destination" : dst[t],
+                    "arrival" : minuteToStringHours(outputList[t]["endHour"]),
+                    "patients" : list(map(lambda m: m['id'], filter(lambda f: idsV[f['vehicle']] == currentVehicleId and f['startHour'] >= outputList[t]['startHour'] and f['startHour'] <= outputList[t]['endHour'], outputList)))
+                }
+            )
+
+
+    trips.append({
+        "origin" : trips[-1]['destination'],
+        "destination" : ed[v],
+        "arrival" : minuteToStringHours(stringHoursToMinute(trips[-1]["arrival"]) + data['distMatrix'][trips[-1]['destination']][ed[v]]),
+        "patients" : []
+    })
+    vehicles.append({
+        "id": currentVehicleId,
+        "trips": trips
+    })
+
+
+outputData['test'] = outputList
+outputData['vehicles'] = vehicles
 
 print("Writing output to " + outputfile)
 with open(outputfile, 'w') as output:

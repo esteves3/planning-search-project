@@ -1,20 +1,49 @@
 {
-    "trips": [
+    "test": [
         {
             "id": 4,
             "isForward": 1,
-            "startHour": "10h13",
-            "duration": "00h11",
-            "endHour": "10h24",
-            "vehicle": 1
+            "startHour": 613,
+            "duration": 11,
+            "endHour": 624,
+            "vehicle": 0
         },
         {
             "id": 4,
             "isForward": 0,
-            "startHour": "11h06",
-            "duration": "00h11",
-            "endHour": "11h17",
-            "vehicle": 1
+            "startHour": 666,
+            "duration": 11,
+            "endHour": 677,
+            "vehicle": 0
+        }
+    ],
+    "vehicles": [
+        {
+            "id": 3,
+            "trips": [
+                {
+                    "origin": 2,
+                    "destination": 0,
+                    "arrival": "10h24",
+                    "patients": [
+                        4
+                    ]
+                },
+                {
+                    "origin": 0,
+                    "destination": 2,
+                    "arrival": "11h17",
+                    "patients": [
+                        4
+                    ]
+                },
+                {
+                    "origin": 2,
+                    "destination": 1,
+                    "arrival": "11h22",
+                    "patients": []
+                }
+            ]
         }
     ]
 }

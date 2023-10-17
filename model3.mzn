@@ -9,7 +9,7 @@ bool: sameVehicleBackward;
 int: maxWaitTime;
 
 set of int: R = 1..numActivities;
-set of int: V = 1..numVehicles;
+set of int: V = 0..<numVehicles;
 int: H = 24 * 60;
 
 array[R] of int: idsA;
