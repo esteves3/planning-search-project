@@ -23,7 +23,16 @@ print("Reading from file: " + inputfile)
 with open(inputfile, 'r') as input_json:
     data = json.load(input_json)
 
-idsA, org, dst, srv, l, rdv, drdv, maxw, c, isForward = []
+idsA= []
+org = []
+dst = []
+srv = []
+l = []
+rdv = []
+drdv = []
+maxw = []
+c = []
+isForward = []
 
 for patient in data['patients']:
     if patient["start"] != -1:
@@ -67,8 +76,13 @@ instance['maxw'] = maxw
 instance['c'] = c
 instance['isForward'] = isForward
 
-idsV, k, C, sd, ed, savail, eavail = []
-
+idsV = []
+k = []
+C = []
+sd = []
+ed = []
+savail = []
+eavail = []
 for v in data['vehicles']:
     for a in v['availability']:
         idsV.append(int(v['id']))
