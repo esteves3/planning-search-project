@@ -11,11 +11,9 @@ def minuteToStringHours(minutes):
     hours, remainder_minutes = divmod(minutes, 60)
     return f"{hours:02d}h{remainder_minutes:02d}"
 
-model = Model("./model3.mzn")
+model = Model("./model.mzn")
 gecode = Solver.lookup("gecode")
-
 instance = Instance(gecode, model)
-
 
 inputfile = sys.argv[1]
 outputfile = sys.argv[2]
@@ -124,41 +122,94 @@ for i in range(len(idsA)):
             'id': idsA[i],
             'isForward': isForward[i],
             'startHour': result['sA'][i],
+            'startHourS': minuteToStringHours(result['sA'][i]),
             'duration': result['dA'][i],
             'endHour': result['eA'][i],
-            'vehicle': result['vA'][i]
+            'endHourS': minuteToStringHours(result['eA'][i]),
+            'vehicle': result['vA'][i],
+            'startLoc': org[i],
+            'endLoc': dst[i] 
         })
+ 
+outputList.sort(key=lambda x: (x["startHour"]))
 
-outputList.sort(key=lambda x: x["startHour"])
+
+
+def createTripObject(origin, dest, arrival, patients):
+    return {
+        "origin": origin,
+        "destination": dest,
+        "arrival": arrival,
+        "patients": patients
+    }
 
 
 for v in range(len(idsV)):
-    trips = []
     currentVehicleId = idsV[v]
-    for t in range(len(outputList)):
-        if currentVehicleId == idsV[outputList[t]["vehicle"]]:
-            trips.append(
-                {
-                    "origin" : org[t],
-                    "destination" : dst[t],
-                    "arrival" : minuteToStringHours(outputList[t]["endHour"]),
-                    "patients" : list(map(lambda m: m['id'], filter(lambda f: idsV[f['vehicle']] == currentVehicleId and f['startHour'] >= outputList[t]['startHour'] and f['startHour'] <= outputList[t]['endHour'], outputList)))
-                }
-            )
+    trips = []
+    thisVehicleAvailAct = list(filter(lambda x: idsV[x['vehicle']] == currentVehicleId and x['startHour'] >= savail[v] and x['endHour'] <= eavail[v], outputList))
+    
+    if len(thisVehicleAvailAct) == 0:
+        if len(list(filter(lambda x: x['id'] == currentVehicleId, vehicles))) != 0:
+            list(filter(lambda x: x['id'] == currentVehicleId, vehicles))[0]['trips'] += trips
+        else:
+            vehicles.append({
+                "id": currentVehicleId,
+                "trips": trips
+            })
+        continue
+    
+    trips.append(createTripObject(sd[v], thisVehicleAvailAct[0]["startLoc"], minuteToStringHours(thisVehicleAvailAct[0]["startHour"]), []))
+    
+    patients = []
+    lastArrival = thisVehicleAvailAct[0]["startHour"]
+    for activityIndex in range(len(thisVehicleAvailAct)):
+        currentActivity = thisVehicleAvailAct[activityIndex]
+        veryNextStartHour = next((trip for trip in thisVehicleAvailAct if trip["startHour"] > currentActivity["startHour"] and trip["startLoc"] != currentActivity["startLoc"]), None)
+        veryNextEndHour = next((trip for trip in thisVehicleAvailAct if trip["endHour"] > currentActivity["startHour"] and trip["endLoc"] != currentActivity["endLoc"]), None)
+        
+        origin = trips[-1]["destination"]
+        destination = -1
+        arrival = "0"
+        ifId = 0
+        patients.append(currentActivity)
+        if (veryNextEndHour is None or veryNextStartHour is None) or currentActivity["endHour"] < veryNextStartHour["startHour"] and currentActivity["endHour"] < veryNextEndHour["endHour"]:
+            lastArrival = currentActivity["endHour"]
+            destination = currentActivity["endLoc"]
+            arrival = minuteToStringHours(currentActivity["endHour"])
+            ifId = 1
+        
+        elif currentActivity["endHour"] > veryNextStartHour["startHour"]:
+            lastArrival = veryNextStartHour["startHour"]
+            destination = veryNextStartHour["startLoc"]
+            arrival = minuteToStringHours(veryNextStartHour["startHour"])
+            ifId = 2
 
+        elif currentActivity["endHour"] > veryNextEndHour["endHour"]:
+            lastArrival = veryNextEndHour["endHour"]
+            destination = veryNextEndHour["endLoc"]
+            arrival = minuteToStringHours(veryNextEndHour["endHour"])
+            ifId = 3
 
-    trips.append({
-        "origin" : trips[-1]['destination'],
-        "destination" : ed[v],
-        "arrival" : minuteToStringHours(stringHoursToMinute(trips[-1]["arrival"]) + data['distMatrix'][trips[-1]['destination']][ed[v]]),
-        "patients" : []
-    })
-    vehicles.append({
-        "id": currentVehicleId,
-        "trips": trips
-    })
+        else: trips.append({'fora': currentActivity})
 
+        patients = patients + list(filter(lambda x: x["startHour"] < lastArrival and x['endHour'] > lastArrival and x['startLoc'] == origin, thisVehicleAvailAct))
 
+        trips.append(createTripObject(origin, destination, arrival, list(set(map(lambda x: x["id"], patients)))))
+
+        patients = list(filter(lambda x: x["endLoc"] != destination, patients))
+
+    trips.append(createTripObject(thisVehicleAvailAct[-1]["endLoc"], ed[v], minuteToStringHours(thisVehicleAvailAct[-1]["endHour"] + data["distMatrix"][thisVehicleAvailAct[-1]["endLoc"]][ed[v]]), []))
+
+    if len(list(filter(lambda x: x['id'] == currentVehicleId, vehicles))) != 0:
+        list(filter(lambda x: x['id'] == currentVehicleId, vehicles))[0]['trips'] += trips
+    else:
+        vehicles.append({
+            "id": currentVehicleId,
+            "trips": trips
+        })
+
+outputData['requests'] = len(set(list(map(lambda x: x['id'], outputList))))
 outputData['test'] = outputList
 outputData['vehicles'] = vehicles
 

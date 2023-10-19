@@ -1,20 +1,29 @@
 {
+    "requests": 1,
     "test": [
         {
-            "id": 4,
+            "id": 5,
             "isForward": 1,
             "startHour": 613,
+            "startHourS": "10h13",
             "duration": 11,
             "endHour": 624,
-            "vehicle": 0
+            "endHourS": "10h24",
+            "vehicle": 0,
+            "startLoc": 2,
+            "endLoc": 0
         },
         {
-            "id": 4,
+            "id": 5,
             "isForward": 0,
             "startHour": 666,
+            "startHourS": "11h06",
             "duration": 11,
             "endHour": 677,
-            "vehicle": 0
+            "endHourS": "11h17",
+            "vehicle": 0,
+            "startLoc": 0,
+            "endLoc": 2
         }
     ],
     "vehicles": [
@@ -22,11 +31,17 @@
             "id": 3,
             "trips": [
                 {
+                    "origin": 1,
+                    "destination": 2,
+                    "arrival": "10h13",
+                    "patients": []
+                },
+                {
                     "origin": 2,
                     "destination": 0,
                     "arrival": "10h24",
                     "patients": [
-                        4
+                        5
                     ]
                 },
                 {
@@ -34,7 +49,7 @@
                     "destination": 2,
                     "arrival": "11h17",
                     "patients": [
-                        4
+                        5
                     ]
                 },
                 {
@@ -44,6 +59,10 @@
                     "patients": []
                 }
             ]
+        },
+        {
+            "id": 4,
+            "trips": []
         }
     ]
 }

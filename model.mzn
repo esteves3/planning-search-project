@@ -1,190 +1,121 @@
+include "globals.mzn";
 include "cumulative.mzn";
-include "globals.mzn";  % Include the globals module for array operations
-int: numRequests;
-set of int: R = 1..numRequests;
+
+
+int: numActivities;
 int: numVehicles;
 int: distMatrixLen;
-
 bool: sameVehicleBackward;
 int: maxWaitTime;
+
+set of int: R = 1..numActivities;
+set of int: V = 0..<numVehicles;
 int: H = 24 * 60;
-array[R] of int: start;
-array[R] of int: dest;
-array[R] of int: ret;
-array[R] of int: l;
-array[R] of int: u;
-array[R] of int: d;
+
+array[R] of int: idsA;
+array[R] of int: org;
+array[R] of int: dst;
 array[R] of int: srv;
-array[R] of int: p;
+array[R] of int: l;
+array[R] of int: rdv;
+array[R] of int: drdv;
+array[R] of int: maxw;
 array[R] of int: c;
+array[R] of int: isForward;
 
 
-set of int: V = 1..numVehicles;
-
-array[V] of set of int: C;
+array[V] of int: idsV;
 array[V] of int: k;
-array[V] of int: vas;
-array[V] of int: vae;
-array[V] of int: vstart;
-array[V] of int: vend;
+array[V] of set of int: C;
+array[V] of int: sd;
+array[V] of int: ed;
+array[V] of int: savail;
+array[V] of int: eavail;
+
 
 array[0..<distMatrixLen, 0..<distMatrixLen] of int: T;
 
 
-%2
+%DECISION VARIABLES
+
 array[R] of var 0..1: S;
-%2
+array[R] of var 0..H: sA;
+array[R] of var 0..H: dA;
+array[R] of var 0..H: eA;
+%array[R] of var 0..1: xA;
+array[R] of var V: vA;
 
-%3
-array[R] of var 0..H: sf;
-array[R] of var 0..H: ef;
-%array[R] of 0..H: df;
-array[R] of var 0..1: xf;
-array[R] of var V: vf;
-
-array[R] of var 0..H: sb;
-array[R] of var 0..H: eb;
-%array[R] of 0..H: db;
-array[R] of var 0..1: xb;
-array[R] of var V: vb;
-
-
-constraint forall(i in R)(
-    %3
-    %df[i] = ef[i] - sf[i] /\
-    %db[i] = eb[i] - sb[i] /\
-    ef[i] - sf[i] >= 0 /\ eb[i] - sb[i] >= 0 /\
-    member([j | j in V where  c[i] in C[j]], vf[i])  /\
-    member([j | j in V where  c[i] in C[j]], vb[i])  /\
-    %14
-    sf[i] >= 0 /\ sf[i] <= u[i] - p[i] /\
-    ef[i] >= 0 /\ ef[i] <= u[i] - p[i] /\
-    sb[i] >= u[i] + d[i] + p[i] /\ sb[i] <= H  /\
-    eb[i] >= u[i] + d[i] + p[i] /\ eb[i] <= H  /\
-    %14 %3
-
-
-    %4
-    (S[i] = 1) <-> (xf[i] = 1 \/ xb[i] = 1) /\
-    (xf[i] = 1) -> start[i] != -1 /\
-    (xb[i] = 1) -> ret[i] != -1
-    %4
-
-
+constraint forall(r in R)(
+    sA[r] >= savail[vA[r]] + T[sd[vA[r]], org[r]]
     /\
-    %7
-    ((start[i] != -1 /\ ef[i] - sf[i] >= T[start[i], dest[i]]) \/ start[i] = -1) /\
-    ((ret[i] != -1 /\ eb[i] - sb[i] >= T[dest[i], ret[i]]) \/ ret[i] = -1)
-    %7
+    eA[r] <= eavail[vA[r]] - T[dst[r], ed[vA[r]]]
+);
 
+constraint forall(r in R)(
+    sameVehicleBackward /\ 
+    r < numActivities /\ 
+    isForward[r] = 1 /\ 
+    isForward[min(r + 1, numActivities)] = 0 /\
+    idsA[r] = idsA[min(r + 1, numActivities)] /\ (S[r] = 1 \/ S[min(r + 1, numActivities)] = 1)  -> vA[r] = vA[min(r + 1, numActivities)] /\ S[r] = 1 /\ S[min(r + 1, numActivities)] = 1
+);
 
-    /\
-    %8
-    ef[i] - sf[i] <= p[i] /\ eb[i] - sb[i] <= p[i]
-    %8
-
-
-    /\
-    %16
-    (not sameVehicleBackward \/ (vf[i] = vb[i]))
-    %16
+constraint forall(r in R)(
+    (S[r] = 1) -> member([j | j in V where c[r] in C[j]], vA[r])
 );
 
 
+constraint forall(r in R)(
+    (S[r] = 1) -> 
+        (dA[r] = eA[r] - sA[r] /\
+        dA[r] >= T[org[r], dst[r]] + 2 * srv[r] /\
+        dA[r] >= 0)
+);
 
-%6
+constraint forall(r in R)(
+    (S[r] = 1) ->
+        if(isForward[r] = 1) then
+            sA[r] >= rdv[r] - maxw[r] /\ sA[r] <= rdv[r]
+            /\
+            eA[r] >= rdv[r] - maxw[r] /\ eA[r] <= rdv[r]
+        else
+            sA[r] >= rdv[r] + drdv[r] /\ sA[r] <= rdv[r] + drdv[r] + maxw[r]
+            /\
+            eA[r] >= rdv[r] + drdv[r] /\ eA[r] <= rdv[r] + drdv[r] + maxw[r]
+        endif
+);
+
+
 constraint forall(i, j in R)(
-    if i != j /\ vf[i] = vf[j] /\ start[i] != -1 /\ start[j] != -1 
-    then
+    if(i != j /\ vA[i] = vA[j]) then
+        (S[j] = 1 /\ S[i] = 1)
+        ->
         (
-            (sf[j] - sf[i] >= T[start[i], start[j]] + srv[i])
-            \/ 
-            (sf[i] - sf[j] >= T[start[j], start[i]] + srv[j])
-        ) 
-        /\
-        (
-            (sf[j] - ef[i] >= T[start[i], dest[j]])
-            \/ 
-            (ef[i] - sf[j] >= T[dest[j], start[i]] + srv[j] + srv[i])
-        ) 
-        /\
-        (
-            (ef[j] - sf[i] >= T[dest[i], start[j]] + srv[i] + srv[j])
-            \/
-            sf[i] - ef[j] >= T[start[j], dest[i]]
+            sA[j] - sA[i] >= T[org[i], org[j]] + srv[i] \/ sA[i] - sA[j] >= T[org[j], org[i]] + srv[j]
         )
         /\
         (
-            ef[j] - ef[i] >= T[dest[i], dest[j]] + srv[j]
-            \/
-            ef[i] - ef[j] >= T[dest[j], dest[i]] + srv[i]
+            sA[j] - eA[i] >= T[dst[i], org[j]] \/ eA[i] - sA[j] >= T[org[j], dst[i]] + srv[j] + srv[i]
+        )
+        /\
+        (
+            eA[j] - sA[i] >= T[org[i], dst[j]] + srv[i] + srv[j] \/ sA[i] - eA[j] >= T[dst[j], org[i]]
+        )
+        /\
+        (
+            eA[j] - eA[i] >= T[dst[i], dst[j]] + srv[j] \/ eA[i] - eA[j] >= T[dst[j], dst[i]] + srv[i]
         )
     endif
 );
 
-
-constraint forall(i, j in R) (
-    if i != j /\ vb[i] == vb[j] /\ ret[i] != -1 /\ ret[j] != -1 then
-        (
-            sb[j] - sb[i] >= T[dest[i], dest[j]] + srv[i] 
-            \/ 
-            sb[i] - sb[j] >= T[dest[j], dest[i]] + srv[j]
-        ) 
-        /\
-        (
-            sb[j] - eb[i] >= T[dest[i], ret[j]] 
-            \/ 
-            eb[i] - sb[j] >= T[ret[j], dest[i]] + srv[j] + srv[i]
-        ) 
-        /\
-        (
-            eb[j] - sb[i] >= T[ret[i], dest[j]] + srv[i] + srv[j]
-            \/
-            sb[i] - eb[j] >= T[dest[j], ret[i]]
-        )
-        /\
-        (
-            eb[j] - eb[i] >= T[ret[i], ret[j]] + srv[j]
-            \/
-            eb[i] - eb[j] >= T[ret[j], ret[i]] + srv[i]
-        )
-    endif
-);
-%6
-/*
-%9
-constraint forall(j in V)(
+constraint forall(v in V)(
     cumulative(
-        [sf[i] * bool2int(vf[i] = j /\ xf[i] = 1) | i in R],
-        [max(ef[i] - sf[i], 0) * bool2int(vf[i] = j /\ xf[i] = 1) | i in R],
-        [l[i]  * bool2int(vf[i] = j /\ xf[i] = 1) | i in R],
-        k[j]
-    )
-    /\
-    cumulative(
-        [sb[i] * bool2int(vb[i] = j /\ xb[i] = 1) | i in R],
-        [max(eb[i] - sb[i], 0) * bool2int(vb[i] = j /\ xb[i] = 1) | i in R],
-        [l[i]  * bool2int(vb[i] = j /\ xb[i] = 1) | i in R],
-        k[j]
+        [if S[r] = 1 /\ vA[r] = v then sA[r] else 0 endif | r in R],
+        [if S[r] = 1 /\ vA[r] = v then dA[r] else 0 endif | r in R],
+        [if S[r] = 1 /\ vA[r] = v then l[r] else 0 endif | r in R],
+        k[v]
     )
 );
 
-%9
 
-
-constraint forall(i in R, j in V)(
-    %15
-    start[i] != -1 /\ vf[i] = j /\ sf[i] >= vas[j] + T[vstart[j], start[i]]
-    /\
-    vf[i] = j /\ ef[i] <= vae[j] - T[dest[i], vend[j]]
-
-    /\
-
-    vb[i] = j /\ sb[i] >= vas[j] + T[vstart[j], dest[i]]
-    /\
-    ret[i] != -1 /\ vb[i] = j /\ eb[i] <= vae[j] - T[ret[i], vend[j]]
-    %15
-);
-*/
 
 solve maximize sum(S);
