@@ -109,13 +109,12 @@ constraint forall(i, j in R)(
 
 constraint forall(v in V)(
     cumulative(
-        [if S[r] = 1 /\ vA[r] = v then sA[r] else 0 endif | r in R],
+        sA,
         [if S[r] = 1 /\ vA[r] = v then dA[r] else 0 endif | r in R],
-        [if S[r] = 1 /\ vA[r] = v then l[r] else 0 endif | r in R],
+        l,
         k[v]
     )
 );
-
 
 
 solve maximize sum(S);

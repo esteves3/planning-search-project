@@ -23,7 +23,7 @@ print("Reading from file: " + inputfile)
 with open(inputfile, 'r') as input_json:
     data = json.load(input_json)
 
-idsA= []
+idsA = []
 org = []
 dst = []
 srv = []
@@ -128,7 +128,8 @@ for i in range(len(idsA)):
             'endHourS': minuteToStringHours(result['eA'][i]),
             'vehicle': result['vA'][i],
             'startLoc': org[i],
-            'endLoc': dst[i] 
+            'endLoc': dst[i],
+            'srv': srv[i]
         })
  
 outputList.sort(key=lambda x: (x["startHour"]))
@@ -139,8 +140,8 @@ def createTripObject(origin, dest, arrival, patients):
     return {
         "origin": origin,
         "destination": dest,
-        "arrival": arrival,
-        "patients": patients
+        "arrival": minuteToStringHours(arrival),
+        "patients": list(set(map(lambda x: x["id"], patients)))
     }
 
 
@@ -159,7 +160,7 @@ for v in range(len(idsV)):
             })
         continue
     
-    trips.append(createTripObject(sd[v], thisVehicleAvailAct[0]["startLoc"], minuteToStringHours(thisVehicleAvailAct[0]["startHour"]), []))
+    trips.append(createTripObject(sd[v], thisVehicleAvailAct[0]["startLoc"], thisVehicleAvailAct[0]["startHour"], []))
     
     patients = []
     lastArrival = thisVehicleAvailAct[0]["startHour"]
@@ -172,34 +173,44 @@ for v in range(len(idsV)):
         destination = -1
         arrival = "0"
         ifId = 0
+
+        if currentActivity["startLoc"] != origin and lastArrival < currentActivity["startHour"]:
+            trips.append(createTripObject(origin, currentActivity["startLoc"], lastArrival + data["distMatrix"][origin][currentActivity["startLoc"]], patients))
+            origin = currentActivity["startLoc"]
+
         patients.append(currentActivity)
+        
+
         if (veryNextEndHour is None or veryNextStartHour is None) or currentActivity["endHour"] < veryNextStartHour["startHour"] and currentActivity["endHour"] < veryNextEndHour["endHour"]:
             lastArrival = currentActivity["endHour"]
             destination = currentActivity["endLoc"]
-            arrival = minuteToStringHours(currentActivity["endHour"])
+            arrival = currentActivity["endHour"]
             ifId = 1
         
         elif currentActivity["endHour"] > veryNextStartHour["startHour"]:
             lastArrival = veryNextStartHour["startHour"]
             destination = veryNextStartHour["startLoc"]
-            arrival = minuteToStringHours(veryNextStartHour["startHour"])
+            arrival = veryNextStartHour["startHour"]
             ifId = 2
 
         elif currentActivity["endHour"] > veryNextEndHour["endHour"]:
             lastArrival = veryNextEndHour["endHour"]
             destination = veryNextEndHour["endLoc"]
-            arrival = minuteToStringHours(veryNextEndHour["endHour"])
+            arrival = veryNextEndHour["endHour"]
             ifId = 3
 
         else: trips.append({'fora': currentActivity})
 
+        if destination == currentActivity["endLoc"]:
+            arrival = arrival - currentActivity["srv"]
+
         patients = patients + list(filter(lambda x: x["startHour"] < lastArrival and x['endHour'] > lastArrival and x['startLoc'] == origin, thisVehicleAvailAct))
 
-        trips.append(createTripObject(origin, destination, arrival, list(set(map(lambda x: x["id"], patients)))))
+        trips.append(createTripObject(origin, destination, arrival, patients))
 
         patients = list(filter(lambda x: x["endLoc"] != destination, patients))
 
-    trips.append(createTripObject(thisVehicleAvailAct[-1]["endLoc"], ed[v], minuteToStringHours(thisVehicleAvailAct[-1]["endHour"] + data["distMatrix"][thisVehicleAvailAct[-1]["endLoc"]][ed[v]]), []))
+    trips.append(createTripObject(thisVehicleAvailAct[-1]["endLoc"], ed[v], thisVehicleAvailAct[-1]["endHour"] + data["distMatrix"][thisVehicleAvailAct[-1]["endLoc"]][ed[v]], []))
 
     if len(list(filter(lambda x: x['id'] == currentVehicleId, vehicles))) != 0:
         list(filter(lambda x: x['id'] == currentVehicleId, vehicles))[0]['trips'] += trips
