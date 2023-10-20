@@ -201,8 +201,9 @@ for v in range(len(idsV)):
 
         else: trips.append({'fora': currentActivity})
 
-        if destination == currentActivity["endLoc"]:
-            arrival = arrival - currentActivity["srv"]
+        thisDestLst = list(filter(lambda x: x["endLoc"] == destination and x["id"] in list(map(lambda p: p["id"], patients)), thisVehicleAvailAct))
+        if len(thisDestLst) != 0:
+            arrival = arrival - max(map(lambda x: x["srv"], thisDestLst))
 
         patients = patients + list(filter(lambda x: x["startHour"] < lastArrival and x['endHour'] > lastArrival and x['startLoc'] == origin, thisVehicleAvailAct))
 
