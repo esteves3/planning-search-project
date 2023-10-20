@@ -45,12 +45,15 @@ array[R] of var 0..H: eA;
 %array[R] of var 0..1: xA;
 array[R] of var V: vA;
 
+%VEHICLE AVAILABILITY
 constraint forall(r in R)(
     sA[r] >= savail[vA[r]] + T[sd[vA[r]], org[r]]
     /\
     eA[r] <= eavail[vA[r]] - T[dst[r], ed[vA[r]]]
 );
 
+
+%SAME VEHICLE BACKWARDS USING ARRAY + 1
 constraint forall(r in R)(
     sameVehicleBackward /\ 
     r < numActivities /\ 
@@ -59,11 +62,13 @@ constraint forall(r in R)(
     idsA[r] = idsA[min(r + 1, numActivities)] /\ (S[r] = 1 \/ S[min(r + 1, numActivities)] = 1)  -> vA[r] = vA[min(r + 1, numActivities)] /\ S[r] = 1 /\ S[min(r + 1, numActivities)] = 1
 );
 
+%VEHICLE MUST HAVE THE PATIENT CATEGORY
 constraint forall(r in R)(
     (S[r] = 1) -> member([j | j in V where c[r] in C[j]], vA[r])
 );
 
 
+%DURATOIN MUST BE EQUAL OR SUPERIOR THAN DISTANCE + 2 * SRV
 constraint forall(r in R)(
     (S[r] = 1) -> 
         (dA[r] = eA[r] - sA[r] /\
@@ -71,6 +76,8 @@ constraint forall(r in R)(
         dA[r] >= 0)
 );
 
+
+%MAX TRAVELING TIMES
 constraint forall(r in R)(
     (S[r] = 1) ->
         if(isForward[r] = 1) then
@@ -85,6 +92,7 @@ constraint forall(r in R)(
 );
 
 
+%MUST HAVE TIME BETWEEN TRIPS TO REACH THE NEXT PLACE
 constraint forall(i, j in R)(
     if(i != j /\ vA[i] = vA[j]) then
         (S[j] = 1 /\ S[i] = 1)
@@ -107,6 +115,7 @@ constraint forall(i, j in R)(
     endif
 );
 
+%COMULATIVE RESOURCES FOR VEHICLES
 constraint forall(v in V)(
     cumulative(
         sA,
@@ -117,4 +126,5 @@ constraint forall(v in V)(
 );
 
 
+%MAXIMIZE THE NUMBER OF REQUESTS
 solve maximize sum(S);

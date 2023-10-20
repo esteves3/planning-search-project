@@ -144,12 +144,15 @@ def createTripObject(origin, dest, arrival, patients):
         "patients": list(set(map(lambda x: x["id"], patients)))
     }
 
-
+#ITERATE OVER THE LENGTH OF VEHICLES (AVAILABILITIES)
 for v in range(len(idsV)):
     currentVehicleId = idsV[v]
     trips = []
+
+    #ACTIVITIES MADE BY THIS VEHICLE IN HIS AVALABLE HOURS
     thisVehicleAvailAct = list(filter(lambda x: idsV[x['vehicle']] == currentVehicleId and x['startHour'] >= savail[v] and x['endHour'] <= eavail[v], outputList))
     
+    #IF NONE EMPTY LIST
     if len(thisVehicleAvailAct) == 0:
         if len(list(filter(lambda x: x['id'] == currentVehicleId, vehicles))) != 0:
             list(filter(lambda x: x['id'] == currentVehicleId, vehicles))[0]['trips'] += trips
@@ -160,57 +163,74 @@ for v in range(len(idsV)):
             })
         continue
     
+    #FROM DEPOT TO REQUEST ORIGIN
     trips.append(createTripObject(sd[v], thisVehicleAvailAct[0]["startLoc"], thisVehicleAvailAct[0]["startHour"], []))
     
     patients = []
     lastArrival = thisVehicleAvailAct[0]["startHour"]
     for activityIndex in range(len(thisVehicleAvailAct)):
         currentActivity = thisVehicleAvailAct[activityIndex]
+
+        #WHATS NEXT?!
         veryNextStartHour = next((trip for trip in thisVehicleAvailAct if trip["startHour"] > currentActivity["startHour"] and trip["startLoc"] != currentActivity["startLoc"]), None)
         veryNextEndHour = next((trip for trip in thisVehicleAvailAct if trip["endHour"] > currentActivity["startHour"] and trip["endLoc"] != currentActivity["endLoc"]), None)
         
+
+        #THIS ORIGIN MUST BE LAST TRIP DESTINATION
         origin = trips[-1]["destination"]
         destination = -1
         arrival = "0"
         ifId = 0
 
+        #IF LAST DESTINATION IS NOT THE NEXT ORIGIN: ADD THE TRIP BETWEEN THOSE PLACES
         if currentActivity["startLoc"] != origin and lastArrival < currentActivity["startHour"]:
             trips.append(createTripObject(origin, currentActivity["startLoc"], lastArrival + data["distMatrix"][origin][currentActivity["startLoc"]], patients))
             origin = currentActivity["startLoc"]
 
+        #PATIENTS TRAVELING
         patients.append(currentActivity)
         
 
+        #IF NOTHING START OR ENDS IN BETWEEN THIS ACTIVITY
         if (veryNextEndHour is None or veryNextStartHour is None) or currentActivity["endHour"] < veryNextStartHour["startHour"] and currentActivity["endHour"] < veryNextEndHour["endHour"]:
             lastArrival = currentActivity["endHour"]
             destination = currentActivity["endLoc"]
             arrival = currentActivity["endHour"]
             ifId = 1
         
+        #IF SOMETHING STARTS IN BETWEEN
         elif currentActivity["endHour"] > veryNextStartHour["startHour"]:
             lastArrival = veryNextStartHour["startHour"]
             destination = veryNextStartHour["startLoc"]
             arrival = veryNextStartHour["startHour"]
             ifId = 2
 
+        #IF SOMETHING ENDS IN BETWEEN
         elif currentActivity["endHour"] > veryNextEndHour["endHour"]:
             lastArrival = veryNextEndHour["endHour"]
             destination = veryNextEndHour["endLoc"]
             arrival = veryNextEndHour["endHour"]
             ifId = 3
+        
 
-        else: trips.append({'fora': currentActivity})
-
+        #PATIENTS THAT ARE IN THE VEHICLE AND HAVE THE CURRENT DESTINATION
         thisDestLst = list(filter(lambda x: x["endLoc"] == destination and x["id"] in list(map(lambda p: p["id"], patients)), thisVehicleAvailAct))
         if len(thisDestLst) != 0:
+            #REMOVE THE MOST TIME TAKEN SRV
             arrival = arrival - max(map(lambda x: x["srv"], thisDestLst))
 
+        #PUT PATIENTS THAT HAVE THE SAME ORIGIN AT ONCE
         patients = patients + list(filter(lambda x: x["startHour"] < lastArrival and x['endHour'] > lastArrival and x['startLoc'] == origin, thisVehicleAvailAct))
+
 
         trips.append(createTripObject(origin, destination, arrival, patients))
 
+
+        #REMOVE PATIENTS FROM THE VEHICLE THAT WERE DROPPED HERE
         patients = list(filter(lambda x: x["endLoc"] != destination, patients))
 
+
+    #ADD THE DEPOT RETURN
     trips.append(createTripObject(thisVehicleAvailAct[-1]["endLoc"], ed[v], thisVehicleAvailAct[-1]["endHour"] + data["distMatrix"][thisVehicleAvailAct[-1]["endLoc"]][ed[v]], []))
 
     if len(list(filter(lambda x: x['id'] == currentVehicleId, vehicles))) != 0:
